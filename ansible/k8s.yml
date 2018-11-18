@@ -74,7 +74,7 @@
         path: /etc/kubernetes/admin.conf
       register: k8s_conf
     - name: initialize a kubernetes cluster
-      command: kubeadm init
+      command: "kubeadm init --apiserver-advertise-address {{ansible_host}}" 
       when: 
         - k8s_conf.stat.exists == False
       register: k8s_init
