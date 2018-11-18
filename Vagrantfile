@@ -23,7 +23,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.define "k8s-node2" do |www|
     www.vm.network :public_network, ip: "192.168.1.213", bridge: "wlp2s0"
-    www.vm.hostname = "k8s-node1"
+    www.vm.hostname = "k8s-node2"
   end
 
   config.vm.provision "shell", inline: <<-SHELL
