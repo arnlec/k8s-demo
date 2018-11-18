@@ -1,0 +1,4 @@
+- src: git@github.com:arnlec/ansible-dockerce.install.git
+  name: dockerce.install
+  scm: git
+  version: master

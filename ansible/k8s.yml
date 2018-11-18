@@ -1,0 +1,105 @@
+---
+# Install docker and kubernetes tools on each node
+
+- hosts: all
+  become: yes
+
+  roles:
+    - role: dockerce.install
+      dockerceVersion: 18.06.1.ce-3.el7
+
+  tasks:
+    - name: setup kubernetes repository
+      yum_repository: 
+        name: kubernetes
+        description: kubernetes
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+        enabled: yes
+        gpgcheck: yes
+        gpgkey:
+          - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+          - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+    - name: install kubernetes tools
+      yum:
+        name: 
+          - kubelet
+          - kubeadm
+          - kubectl
+          - kubernetes-cni
+        state: present
+
+    - name: enable kubelet service
+      systemd:
+        name: kubelet
+        state: started
+        enabled: yes
+
+    - name: remove swap file
+      mount:
+        name: swap
+        fstype: swap
+        state: absent
+    
+    - name: disable swap
+      command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+
+    - name: enable netfilter on bridge
+      sysctl:
+        name: "{{item}}"
+        value: 1
+        sysctl_set: yes
+        state: present
+        reload: yes
+      with_items:
+        - net.bridge.bridge-nf-call-ip6tables
+        - net.bridge.bridge-nf-call-iptables
+        - net.bridge.bridge-nf-call-arptables
+
+    - name: disable firewalld
+      systemd:
+        name: firewalld
+        state: stopped
+        enabled: false
+
+
+
+- hosts: master
+  become: yes
+
+  tasks:
+    - name: check if kubernetes cluster is initialized
+      stat:
+        path: /etc/kubernetes/admin.conf
+      register: k8s_conf
+    - name: initialize a kubernetes cluster
+      command: kubeadm init
+      when: 
+        - k8s_conf.stat.exists == False
+      register: k8s_init
+    - debug:
+        var: k8s_init.stdout_lines
+      when: k8s_init.stdout_lines is defined
+    - name: create a user
+      user:
+        name: k8s
+        password: "{{'password'|password_hash('sha512','salt')}}"
+    - name: create kubernetes folder
+      file:
+        path: /home/k8s/.kube
+        state: directory
+        owner: k8s
+        group: k8s
+    - name: copy kubernetes configuration file
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/k8s/.kube/config
+        owner: k8s
+        group: k8s
+        remote_src: yes
+    - name: deploy a pod network
+      shell: "kubectl apply -f \"https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')\""
+      become: yes
+      become_user: k8s
+        
