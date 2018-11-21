@@ -37,7 +37,8 @@
 
     - name: remove swap file
       mount:
-        name: swap
+        name: none
+        src: /swapfile
         fstype: swap
         state: absent
     
