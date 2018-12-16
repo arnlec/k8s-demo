@@ -25,7 +25,6 @@
         name: 
           - kubelet
           - kubeadm
-          - kubectl
           - kubernetes-cni
         state: present
 
@@ -70,6 +69,11 @@
   become: yes
 
   tasks:
+    - name: install kubectl
+      yum:
+        name: kubectl
+        state: present
+  
     - name: check if kubernetes cluster is initialized
       stat:
         path: /etc/kubernetes/admin.conf
