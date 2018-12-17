@@ -12,17 +12,17 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.define "k8s-master" do |db|
-    db.vm.network :public_network, ip: "192.168.1.211", bridge: "wlp2s0"
+    db.vm.network :private_network, ip: "192.168.99.11"
     db.vm.hostname = "k8s-master"
   end
 
   config.vm.define "k8s-node1" do |www|
-    www.vm.network :public_network, ip: "192.168.1.212", bridge: "wlp2s0" 
+    www.vm.network :private_network, ip: "192.168.99.12" 
     www.vm.hostname = "k8s-node1"
   end
 
   config.vm.define "k8s-node2" do |www|
-    www.vm.network :public_network, ip: "192.168.1.213", bridge: "wlp2s0"
+    www.vm.network :private_network, ip: "192.168.99.13"
     www.vm.hostname = "k8s-node2"
   end
 
