@@ -28,6 +28,14 @@
           - kubernetes-cni
         state: present
 
+    - name: set KUBELET_EXTRA_ARGS
+      lineinfile:
+        path: /etc/sysconfig/kubelet
+        regexp: '^KUBELET_EXTRA_ARGS='
+        line: "KUBELET_EXTRA_ARGS=--node-ip={{ansible_host}}"
+      notify:
+        - restart kubelet
+
     - name: enable kubelet service
       systemd:
         name: kubelet
@@ -62,6 +70,12 @@
         name: firewalld
         state: stopped
         enabled: false
+  
+  handlers:
+    - name: restart kubelet
+      systemd:
+        name: kubelet
+        state: restarted
 
 
 
@@ -79,7 +93,7 @@
         path: /etc/kubernetes/admin.conf
       register: k8s_conf
     - name: initialize a kubernetes cluster
-      command: "kubeadm init --apiserver-advertise-address {{ansible_host}} --pod-network-cidr=172.0.0.0/24" 
+      command: "kubeadm init --apiserver-advertise-address {{ansible_host}} --pod-network-cidr=10.32.0.0/12" 
       when: 
         - k8s_conf.stat.exists == False
       register: k8s_init
@@ -107,4 +121,3 @@
       shell: "kubectl apply -f \"https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')\""
       become: yes
       become_user: k8s
-        
