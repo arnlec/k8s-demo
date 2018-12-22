@@ -121,3 +121,23 @@
       shell: "kubectl apply -f \"https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')\""
       become: yes
       become_user: k8s
+    - name: create join command script
+      shell: "kubeadm token create --print-join-command >> /etc/kubernetes/kubeadm_join_cmd.sh"
+    - name: upload join command script
+      fetch:
+        src: /etc/kubernetes/kubeadm_join_cmd.sh
+        dest: /tmp/k8s/
+        flat: yes
+
+- hosts: node
+  become: yes
+  tasks:
+    - name: copy join command script
+      copy:
+        src: /tmp/k8s/kubeadm_join_cmd.sh
+        dest: /tmp/kubeadm_join_cmd.sh
+        mode: 0755
+      register: join_command_script
+    - name: join cluster
+      shell: /tmp/kubeadm_join_cmd.sh
+      
