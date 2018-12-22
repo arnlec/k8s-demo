@@ -1,0 +1,6 @@
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: reset k8s node
+      command: kubeadm reset -f
